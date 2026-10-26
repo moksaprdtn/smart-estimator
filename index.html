@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta Viewport Terkunci Dari Zoom In / Zoom Out -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Estimator - Kalkulator Material & Bangunan</title>
+    
+    <!-- FontAwesome Lokal -->
+    <link rel="stylesheet" href="css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --brand-color: #2563eb;
+            --brand-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .dark {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --brand-color: #3b82f6;
+            --brand-gradient: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        /* Otomatisasi Warna Teks di Mode Gelap */
+        .dark h1, .dark h2, .dark h3, .dark h4, .dark p, .dark span, .dark label, .dark i {
+            color: var(--text-main) !important;
+        }
+        .dark .text-muted-custom {
+            color: var(--text-muted) !important;
+        }
+
+        .main-container {
+            max-width: 28rem;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-card);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            position: relative;
+            padding-bottom: 5rem;
+        }
+
+        .card-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            color: var(--text-main);
+        }
+
+        .btn-primary {
+            background-color: var(--brand-color);
+            color: #ffffff !important;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            padding: 0.85rem 1rem;
+            border: none;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .input-field {
+            width: 100%;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .input-field:focus {
+            border-color: var(--brand-color);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 9999px; }
+
+        .hidden { display: none !important; }
+
+        /* Khusus Mode Cetak / PDF */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #result-container, #result-container * {
+                visibility: visible !important;
+            }
+            #result-container {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 15px !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            button { display: none !important; }
+        }
+        
+        img, video {
+            width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <!-- Header Utama -->
+        <header id="mainHeader" style="padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--bg-card); z-index: 40;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="background: var(--brand-color); color: white; padding: 0.5rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-calculator" style="font-size: 1.1rem; color: white !important;"></i>
+                </div>
+                <div>
+                    <h1 style="font-size: 1rem; font-weight: 800; margin: 0;" id="txt-title">Smart Estimator</h1>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0.1rem 0 0 0;" id="txt-subtitle">Kalkulator Material & Bangunan</p>
+                </div>
+            </div>
+            <button onclick="openDrawer()" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); cursor: pointer;">
+                <i class="fa-solid fa-bars" style="font-size: 1.2rem;"></i>
+            </button>
+        </header>
+
+        <!-- Header Fitur (Full Screen View) -->
+        <header id="featureHeader" class="hidden" style="padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--bg-card); z-index: 40;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="background: var(--brand-color); color: white; padding: 0.5rem; border-radius: 0.75rem;">
+                    <i id="featureHeaderIcon" class="fa-solid fa-calculator" style="font-size: 1.1rem; color: white !important;"></i>
+                </div>
+                <div>
+                    <h1 id="featureHeaderTitle" style="font-size: 1rem; font-weight: 800; margin: 0;">Detail Fitur</h1>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="lbl-fullscreen-mode">Mode Layar Penuh</p>
+                </div>
+            </div>
+            <button onclick="backToHome()" style="padding: 0.4rem 0.8rem; background: rgba(37,99,235,0.1); color: var(--brand-color); border: 1px solid var(--border-color); border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-house"></i>
+                <span id="btn-back-home">Menu Utama</span>
+            </button>
+        </header>
+
+        <!-- Header Pengaturan -->
+        <header id="settingsHeader" class="hidden" style="padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--bg-card); z-index: 40;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="background: var(--brand-color); color: white; padding: 0.5rem; border-radius: 0.75rem;">
+                    <i class="fa-solid fa-gear" style="font-size: 1.1rem; color: white !important;"></i>
+                </div>
+                <div>
+                    <h1 style="font-size: 1rem; font-weight: 800; margin: 0;" id="lbl-set-pagetitle">Pengaturan Aplikasi</h1>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="lbl-fullscreen-mode-2">Mode Layar Penuh</p>
+                </div>
+            </div>
+            <button onclick="backToHome()" style="padding: 0.4rem 0.8rem; background: rgba(37,99,235,0.1); color: var(--brand-color); border: 1px solid var(--border-color); border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-house"></i>
+                <span id="btn-back-home-2">Menu Utama</span>
+            </button>
+        </header>
+
+        <!-- Overlay Drawer -->
+        <div id="drawerOverlay" onclick="closeDrawer()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none;"></div>
+
+        <!-- Drawer Menu Navigasi -->
+        <div id="rightDrawer" style="position: fixed; top: 0; right: 0; bottom: 0; width: 18rem; max-width: 100%; background: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 50; display: none; flex-direction: column; justify-content: space-between; box-shadow: -4px 0 15px rgba(0,0,0,0.1);">
+            <div>
+                <div style="padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="padding: 0.5rem; border-radius: 0.75rem; background: rgba(37,99,235,0.1); color: var(--brand-color);">
+                            <i class="fa-solid fa-compass" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <div>
+                            <h2 style="font-size: 0.9rem; font-weight: 800; margin: 0;" id="lbl-nav-menu">Menu Navigasi</h2>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="lbl-nav-desc">Pilihan menu & pengaturan</p>
+                        </div>
+                    </div>
+                    <button onclick="closeDrawer()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark" style="font-size: 1.2rem;"></i></button>
+                </div>
+
+                <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button onclick="openSettingsPage();" class="card-box" style="display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fa-solid fa-gear" style="color: var(--brand-color);"></i>
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700;" id="menu-settings">Pengaturan</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="menu-settings-sub">Tema & Bahasa aplikasi</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; color: var(--text-muted);"></i>
+                    </button>
+
+                    <button onclick="openHistoryModal();" class="card-box" style="display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fa-solid fa-clock-rotate-left" style="color: #d97706;"></i>
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700;" id="menu-history">Riwayat Pencatatan</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="menu-history-sub">Lihat semua riwayat estimasi</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; color: var(--text-muted);"></i>
+                    </button>
+
+                    <!-- Card Box Hapus Iklan Selamanya / Premium (Diletakkan di atas Dukung Pengembang) -->
+                    <button id="btnNavRemoveAds" onclick="openPremiumModal();" class="card-box" style="display: flex; align-items: center; justify-content: space-between; width: 100%; cursor: pointer; text-align: left; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.15) 100%); border: 1px solid #f59e0b;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fa-solid fa-crown" style="color: #f59e0b; font-size: 1.1rem;"></i>
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #d97706;" id="menu-remove-ads">Hapus Iklan Selamanya</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="menu-remove-ads-sub">Upgrade ke versi Pro tanpa iklan</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; color: #d97706;"></i>
+                    </button>
+
+                    <a href="https://sociabuzz.com/moksa_prdtn/donate" target="_blank" class="card-box" style="display: flex; align-items: center; justify-content: space-between; width: 100%; box-sizing: border-box; text-decoration: none;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fa-solid fa-mug-hot" style="color: #e11d48;"></i>
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700;" id="menu-donate">Dukung Pengembang</div>
+                                <div style="font-size: 0.65rem; color: var(--text-muted);" id="menu-donate-sub">Traktir kopi untuk developer</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem; color: var(--text-muted);"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div style="padding: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">
+                SmartEstimator v1.0.0 &bull; BY MOKSA_PRDTN
+            </div>
+        </div>
+
+        <!-- Modal Verifikasi Kode Premium & Pembelian SociaBuzz -->
+        <div id="premiumModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+            <div class="card-box" style="width: 100%; max-width: 22rem; display: flex; flex-direction: column; gap: 1rem; position: relative; border: 2px solid #f59e0b;">
+                <button onclick="closePremiumModal()" style="position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <i class="fa-solid fa-xmark" style="font-size: 1.2rem;"></i>
+                </button>
+                
+                <div style="text-align: center; padding-top: 0.5rem;">
+                    <div style="width: 3rem; height: 3rem; background: rgba(245, 158, 11, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem auto; color: #f59e0b;">
+                        <i class="fa-solid fa-crown" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 0.25rem 0;" id="lbl-modal-prem-title">Aktivasi Hapus Iklan</h3>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;" id="lbl-modal-prem-desc">Beli Kode pas sekarang juga! untuk menghilangkan semua iklan selamanya!</p>
+                </div>
+
+                <!-- Step 1: Beli Kode -->
+                <div style="background: rgba(37,99,235,0.05); border: 1px solid rgba(37,99,235,0.2); border-radius: 0.75rem; padding: 0.75rem; text-align: center;">
+                    <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;" id="lbl-step1">Belum punya Kode Unik?</div>
+                    <a href="https://sociabuzz.com/moksa_prdtn/p/generate-code-apk-smart-estimator" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1rem; background: #e11d48; color: white; border-radius: 0.5rem; text-decoration: none; font-size: 0.75rem; font-weight: 800;">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span id="btn-buy-code">Beli Kode Pass Unik Klik Di Sini</span>
+                    </a>
+                </div>
+
+                <!-- Step 2: Masukkan Kode -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 700;" id="lbl-input-code">Masukkan Kode Pass Unik Anda:</label>
+                    <input type="text" id="passCodeInput" placeholder="Contoh: SAYA AKAN LAWAN!" class="input-field" style="text-transform: uppercase; text-align: center; font-weight: 800; letter-spacing: 2px;">
+                </div>
+
+                <button onclick="verifyPassCode()" class="btn-primary" style="background: #10b981; box-shadow: 0 4px 10px rgba(16,185,129,0.25);">
+                    <i class="fa-solid fa-key"></i>
+                    <span id="btn-verify-code">Aktifkan Fitur Bebas Iklan</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Riwayat -->
+        <div id="historyModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+            <div class="card-box" style="width: 100%; max-width: 24rem; max-height: 80vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 0.875rem; font-weight: 800; margin: 0;" id="history-modal-title">Riwayat Pencatatan Estimasi</h3>
+                    <button onclick="closeHistoryModal()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark" style="font-size: 1rem;"></i></button>
+                </div>
+                <div id="historyListContainer" style="padding: 1rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 0.75rem;"></div>
+                <div style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem;">
+                    <button onclick="clearHistory()" style="flex: 1; padding: 0.6rem; background: #f43f5e; color: white; border: none; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; cursor: pointer;">Reset Semua</button>
+                    <button onclick="closeHistoryModal()" style="padding: 0.6rem 1rem; background: var(--border-color); color: var(--text-main); border: none; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; cursor: pointer;">Tutup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Konten Utama -->
+        <main style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem; flex: 1;">
+
+            <!-- Beranda Pilihan Fitur -->
+            <div id="homeView" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <h2 style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted); margin: 0 0 0.25rem 0;" id="lbl-choose-calc">Pilih Fitur Kalkulator:</h2>
+                
+                <div onclick="selectFeature('wall')" class="card-box" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.875rem;">
+                        <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(16,185,129,0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fa-solid fa-chart-pie"></i></div>
+                        <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 800; margin: 0;" id="card-wall-title">Wall Panel & Lis PVC</h3>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="card-wall-desc">Hitung lembar dinding dekoratif</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                </div>
+
+                <div onclick="selectFeature('paint')" class="card-box" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.875rem;">
+                        <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(37,99,235,0.1); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fa-solid fa-paint-roller"></i></div>
+                        <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 800; margin: 0;" id="card-paint-title">Cat Dinding Tembok</h3>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="card-paint-desc">Hitung liter & kaleng cat</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                </div>
+
+                <div onclick="selectFeature('ceramic')" class="card-box" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.875rem;">
+                        <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(168,85,247,0.1); color: #a855f7; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fa-solid fa-border-all"></i></div>
+                        <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 800; margin: 0;" id="card-ceramic-title">Keramik & Granit Lantai</h3>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="card-ceramic-desc">Kebutuhan dus ubin lantai</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                </div>
+
+                <div onclick="selectFeature('brick')" class="card-box" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 0.875rem;">
+                        <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(245,158,11,0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fa-solid fa-cubes"></i></div>
+                        <div>
+                            <h3 style="font-size: 0.875rem; font-weight: 800; margin: 0;" id="card-brick-title">Bata & Hebel Dinding</h3>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;" id="card-brick-desc">Estimasi batako & mortar</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                </div>
+
+                <!-- Card Box Papan Iklan (Diletakkan di bawah card box Bata & Hebel Dinding) -->
+                <div id="mainAdCard" class="card-box" style="position: relative; padding: 1rem; border: 1px dashed var(--border-color); background: rgba(0,0,0,0.02); text-align: center; margin-top: 0.25rem;">
+                    <!-- Tombol Hapus Iklan Merah -->
+                    <button onclick="openPremiumModal()" style="position: absolute; top: 0.5rem; right: 0.5rem; background: #ef4444; border: 1px solid #dc2626; padding: 0.2rem 0.6rem; border-radius: 0.5rem; color: white; font-size: 0.65rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
+                        <i class="fa-solid fa-trash-can" style="font-size: 0.6rem;"></i>
+                        <span id="btn-ad-remove">Hapus Iklan</span>
+                    </button>
+                    
+                    <span style="font-size: 0.6rem; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 0.5rem;" id="lbl-ad-title">PAPAN IKLAN / SPONSOR</span>
+                    
+                    <!-- Container Banner Iklan / AdSense / Adsterra / Monetag -->
+                    <div id="adBannerContent" style="min-height: 100px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.03); border-radius: 0.5rem; border: 1px solid var(--border-color); padding: 0.5rem;">
+                        
+                        <!-- 1. IKLAN ONLINE -->
+                        <div id="onlineAd" style="width: 100%; text-align: center;">
+                            <script async="async" data-cfasync="false" src="https://biomanos.org/21/499bc310dd3dc3004ce69700e91406e0"></script>
+                            <div id="container-499bc310dd3dc3004ce69700e91406e0"></div>
+                        </div>
+
+                        <!-- 2. IKLAN OFFLINE (Video dioptimalkan untuk WebView Android) -->
+                        <div id="offlineAd" class="hidden" style="width: 100%; text-align: center;">
+                            <video id="offlineVideoElem" autoplay loop muted playsinline webkit-playsinline preload="auto" autobuffer style="width: 100%; height: auto; border-radius: 0.5rem; display: block; margin: 0 auto;">
+                                <source src="img/moksa_offline.mp4" type="video/mp4">
+                                Browser Anda tidak mendukung pemutaran video.
+                            </video>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- HALAMAN PENGATURAN -->
+            <div id="settingsPageView" class="hidden card-box" style="display: flex; flex-direction: column; gap: 1rem;">
+                <h2 style="font-size: 0.875rem; font-weight: 800; color: var(--brand-color); margin: 0;" id="lbl-set-header">Pengaturan Aplikasi</h2>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700;" id="lbl-darkmode">Mode Gelap</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);" id="lbl-darkmode-sub">Ubah tema tampilan gelap/terang</div>
+                    </div>
+                    <button onclick="toggleDarkMode()" style="padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-weight: 700; font-size: 0.75rem; cursor: pointer;">Toggle Mode</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label style="font-size: 0.85rem; font-weight: 700;" id="lbl-language">Pilihan Bahasa / Language</label>
+                    <select id="languageSelect" onchange="changeLanguage(this.value)" class="input-field">
+                        <option value="id">Bahasa Indonesia</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- MODUL FITUR KALKULATOR -->
+
+            <!-- 1. Wall Panel -->
+            <div id="module-wall" class="calculator-module hidden card-box" style="display: flex; flex-direction: column; gap: 0.875rem;">
+                <h2 style="font-size: 0.85rem; font-weight: 800; color: var(--brand-color); margin: 0;"><i class="fa-solid fa-ruler-combined"></i> <span id="wall-sec-title">Dimensi Dinding & Panel</span></h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-wall-len">Lebar Dinding (m)</label>
+                        <input type="number" id="wall-length" value="0" step="0.1" class="input-field">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-wall-height">Tinggi Dinding (m)</label>
+                        <input type="number" id="wall-height" value="0" step="0.1" class="input-field">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-panel-width">Lebar 1 Panel (cm)</label>
+                        <input type="number" id="panel-width" value="0" class="input-field">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-panel-price">Harga per Lembar (Rp)</label>
+                        <input type="number" id="price-panel" value="0" class="input-field">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Cat Dinding -->
+            <div id="module-paint" class="calculator-module hidden card-box" style="display: flex; flex-direction: column; gap: 0.875rem;">
+                <h2 style="font-size: 0.85rem; font-weight: 800; color: var(--brand-color); margin: 0;"><i class="fa-solid fa-paint-roller"></i> <span id="paint-sec-title">Kebutuhan Cat Tembok</span></h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-paint-area">Luas Total Dinding (m²)</label>
+                        <input type="number" id="paint-area" value="0" class="input-field">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-paint-coat">Jumlah Lapis Cat</label>
+                        <input type="number" id="paint-coat" value="0" class="input-field">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-paint-cov">Daya Sebar (m²/Liter)</label>
+                        <input type="number" id="paint-coverage" value="0" class="input-field">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-paint-price">Harga per Kaleng 5L (Rp)</label>
+                        <input type="number" id="price-paint" value="0" class="input-field">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Keramik -->
+            <div id="module-ceramic" class="calculator-module hidden card-box" style="display: flex; flex-direction: column; gap: 0.875rem;">
+                <h2 style="font-size: 0.85rem; font-weight: 800; color: var(--brand-color); margin: 0;"><i class="fa-solid fa-border-all"></i> <span id="ceramic-sec-title">Hitung Keramik Lantai</span></h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-room-len">Panjang Ruangan (m)</label>
+                        <input type="number" id="room-length" value="0" step="0.1" class="input-field">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-room-width">Lebar Ruangan (m)</label>
+                        <input type="number" id="room-width" value="0" step="0.1" class="input-field">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-ceramic-size">Ukuran Keramik</label>
+                        <select id="ceramic-size" class="input-field">
+                            <option value="0.16">40 x 40 cm (1 Dus = 1 m²)</option>
+                            <option value="0.25">50 x 50 cm (1 Dus = 1 m²)</option>
+                            <option value="0.36" selected>60 x 60 cm (1 Dus = 1.44 m²)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-ceramic-box">Isi per Dus (m²)</label>
+                        <input type="number" id="ceramic-box-content" value="0" step="0.01" class="input-field">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-ceramic-price">Harga per Dus (Rp)</label>
+                    <input type="number" id="price-ceramic" value="0" class="input-field">
+                </div>
+            </div>
+
+            <!-- 4. Batako / Hebel -->
+            <div id="module-brick" class="calculator-module hidden card-box" style="display: flex; flex-direction: column; gap: 0.875rem;">
+                <h2 style="font-size: 0.85rem; font-weight: 800; color: var(--brand-color); margin: 0;"><i class="fa-solid fa-cubes"></i> <span id="brick-sec-title">Hitung Dinding Hebel / Bata</span></h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-brick-len">Lebar Dinding (m)</label>
+                        <input type="number" id="brick-length" value="0" step="0.1" class="input-field">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-brick-height">Tinggi Dinding (m)</label>
+                        <input type="number" id="brick-height" value="0" step="0.1" class="input-field">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-brick-type">Tipe Material</label>
+                        <select id="brick-type" class="input-field">
+                            <option value="hebel">Bata Ringan / Hebel (8 pcs/m²)</option>
+                            <option value="batako">Batako Press (15 pcs/m²)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);" id="lbl-brick-price">Harga Satuan (Rp)</label>
+                        <input type="number" id="price-brick" value="0" class="input-field">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Hitung & Reset -->
+            <div id="actionButtonsContainer" class="hidden" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button onclick="calculate()" class="btn-primary">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span id="btn-calc-text">Hitung Estimasi Sekarang</span>
+                </button>
+                <button onclick="resetCalculator()" style="padding: 0.6rem; background: var(--border-color); color: var(--text-main); border: none; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span id="btn-reset-text">Reset Angka ke 0</span>
+                </button>
+            </div>
+
+            <!-- Kartu Hasil Estimasi -->
+            <div id="result-container" class="hidden card-box" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                    <h3 style="font-size: 0.875rem; font-weight: 800; margin: 0;"><i class="fa-solid fa-receipt" style="color: var(--brand-color);"></i> <span id="res-title-text">Rincian Estimasi Biaya</span></h3>
+                    <span id="res-badge" style="font-size: 0.7rem; background: rgba(37,99,235,0.1); color: var(--brand-color); padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700;">Kategori</span>
+                </div>
+                
+                <div id="res-content" style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem;"></div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);" id="res-total-label">Total Estimasi Biaya</div>
+                        <div id="res-total" style="font-size: 1.1rem; font-weight: 900; color: var(--brand-color);">Rp 0</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                        <button onclick="copyToClipboard()" style="padding: 0.4rem 0.75rem; background: var(--brand-color); color: white; border: none; border-radius: 0.5rem; font-size: 0.7rem; font-weight: 700; cursor: pointer;">Salin Teks</button>
+                        <button onclick="shareWhatsApp()" style="padding: 0.4rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.7rem; font-weight: 700; cursor: pointer;" id="btn-wa-text">Kirim WA</button>
+                        <button onclick="saveToPDF()" style="padding: 0.4rem 0.75rem; background: #f43f5e; color: white; border: none; border-radius: 0.5rem; font-size: 0.7rem; font-weight: 700; cursor: pointer;" id="btn-pdf-text">Cetak / PDF</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script Logika JavaScript -->
+    <script>
+        let currentTab = null;
+        let lastCalculation = null;
+        let currentLang = 'id';
+
+        // DAFTAR KODE UNIK
+        const VALID_PASSCODES = ["SMARTPRO2026", "MOKSA_VIP", "NOADS123", "PREMIUM99", "DRTY326", "2IDJR", "8OE8O", "UUDH156", "UYE8O9", "GEU871", "NDJ8373", "#738UH", "UEHRF67", "HEUEH97", "HDU634"];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+
+            const savedLang = localStorage.getItem('language') || 'id';
+            const langSelectElem = document.getElementById('languageSelect');
+            if (langSelectElem) langSelectElem.value = savedLang;
+            changeLanguage(savedLang);
+
+            // Cek status premium saat halaman dimuat
+            checkPremiumStatus();
+            
+            // Cek koneksi iklan online/offline
+            updateAdConnectionStatus();
+        });
+
+        // Sinkronisasi Status Premium & Iklan
+        function checkPremiumStatus() {
+            const isPremium = localStorage.getItem('isAdFree') === 'true';
+            const mainAdCard = document.getElementById('mainAdCard');
+            const menuRemoveAds = document.getElementById('menu-remove-ads');
+            const menuRemoveAdsSub = document.getElementById('menu-remove-ads-sub');
+            const btnNavRemoveAds = document.getElementById('btnNavRemoveAds');
+
+            if (isPremium) {
+                if (mainAdCard) mainAdCard.style.display = 'none';
+                
+                if (menuRemoveAds) menuRemoveAds.innerText = currentLang === 'id' ? "Status: Premium Active" : "Status: Premium Active";
+                if (menuRemoveAdsSub) menuRemoveAdsSub.innerText = currentLang === 'id' ? "Bebas Iklan Permanen" : "Permanent Ad-Free";
+                if (btnNavRemoveAds) {
+                    btnNavRemoveAds.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.15) 100%)';
+                    btnNavRemoveAds.style.borderColor = '#10b981';
+                    btnNavRemoveAds.onclick = function() {
+                        alert(currentLang === 'id' ? "Aplikasi Anda sudah dalam status Premium (Bebas Iklan)." : "Your app is already in Premium status.");
+                    };
+                }
+            }
+        }
+
+        // Fungsi Otomatis Penyesuaian Iklan Online / Offline
+        function updateAdConnectionStatus() {
+            if (localStorage.getItem('isAdFree') === 'true') return;
+
+            const onlineAdElem = document.getElementById('onlineAd');
+            const offlineAdElem = document.getElementById('offlineAd');
+            const videoElem = document.getElementById('offlineVideoElem');
+
+            if (navigator.onLine) {
+                if (onlineAdElem) onlineAdElem.classList.remove('hidden');
+                if (offlineAdElem) offlineAdElem.classList.add('hidden');
+                if (videoElem) videoElem.pause();
+            } else {
+                if (onlineAdElem) onlineAdElem.classList.add('hidden');
+                if (offlineAdElem) offlineAdElem.classList.remove('hidden');
+                if (videoElem) {
+                    var playPromise = videoElem.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(function(error) {
+                            console.log("Autoplay ditahan oleh browser/WebView:", error);
+                        });
+                    }
+                }
+            }
+        }
+
+        // Pantau Perubahan Jaringan Real-Time
+        window.addEventListener('online', updateAdConnectionStatus);
+        window.addEventListener('offline', updateAdConnectionStatus);
+
+        // Buka Pop-up Verifikasi
+        function openPremiumModal() {
+            closeDrawer();
+            document.getElementById('passCodeInput').value = '';
+            document.getElementById('premiumModal').classList.remove('hidden');
+        }
+
+        // Tutup Pop-up Verifikasi
+        function closePremiumModal() {
+            document.getElementById('premiumModal').classList.add('hidden');
+        }
+
+        // Verifikasi Kode Pass Unik
+        function verifyPassCode() {
+            const inputVal = document.getElementById('passCodeInput').value.trim().toUpperCase();
+            if (!inputVal) {
+                alert(currentLang === 'id' ? "Harap masukkan kode pass unik terlebih dahulu." : "Please enter unique pass code first.");
+                return;
+            }
+
+            if (VALID_PASSCODES.includes(inputVal)) {
+                localStorage.setItem('isAdFree', 'true');
+                checkPremiumStatus();
+                closePremiumModal();
+                alert(currentLang === 'id' ? "Selamat! Kode pass unik benar. Fitur Hapus Iklan berhasil diaktifkan selamanya!" : "Congratulations! Code verified. Ad-free feature activated permanently!");
+            } else {
+                alert(currentLang === 'id' ? "Kode pass unik tidak valid atau salah. Silakan periksa kembali transaksi SociaBuzz Anda." : "Invalid pass code. Please check your SociaBuzz transaction again.");
+            }
+        }
+
+        const langData = {
+            id: {
+                title: "Smart Estimator", subtitle: "Kalkulator Material & Bangunan",
+                menuSettings: "Pengaturan", menuSettingsSub: "Tema & Bahasa aplikasi",
+                menuHistory: "Riwayat Pencatatan", menuHistorySub: "Lihat semua riwayat estimasi",
+                menuRemoveAds: "Hapus Iklan Selamanya", menuRemoveAdsSub: "Upgrade ke versi Pro tanpa iklan",
+                menuDonate: "Dukung Pengembang", menuDonateSub: "Traktir kopi untuk developer",
+                chooseCalc: "Pilih Fitur Kalkulator:", setPageTitle: "Pengaturan Aplikasi",
+                darkMode: "Mode Gelap", darkModeSub: "Ubah tema tampilan gelap/terang",
+                languageLbl: "Pilihan Bahasa / Language", calcBtn: "Hitung Estimasi Sekarang",
+                resetBtn: "Reset Angka ke 0", resTitle: "Rincian Estimasi Biaya",
+                totalLabel: "Total Estimasi Biaya", pdfBtn: "Cetak / PDF", waBtn: "Kirim WA",
+                fullscreenMode: "Mode Layar Penuh", backHome: "Menu Utama",
+                navMenu: "Menu Navigasi", navDesc: "Pilihan menu & pengaturan",
+                adTitle: "PAPAN IKLAN / SPONSOR", adPlaceholder: "Ruang Kode Banner Iklan Anda (300x250 / Banner)",
+                btnAdRemove: "Hapus Iklan", modalPremTitle: "Aktivasi Hapus Iklan", modalPremDesc: "Beli Kode pas sekarang juga! untuk menghilangkan semua iklan selamanya!",
+                lblStep1: "Belum punya Kode Unik?", btnBuyCode: "Beli Kode Pass Unik Klik Di Sini", lblInputCode: "Masukkan Kode Pass Unik Anda:", btnVerifyCode: "Aktifkan Fitur Bebas Iklan",
+                wallSec: "Dimensi Dinding & Panel", wallLen: "Lebar Dinding (m)", wallHeight: "Tinggi Dinding (m)", panelWidth: "Lebar 1 Panel (cm)", panelPrice: "Harga per Lembar (Rp)",
+                paintSec: "Kebutuhan Cat Tembok", paintArea: "Luas Total Dinding (m²)", paintCoat: "Jumlah Lapis Cat", paintCov: "Daya Sebar (m²/Liter)", paintPrice: "Harga per Kaleng 5L (Rp)",
+                ceramicSec: "Hitung Keramik Lantai", roomLen: "Panjang Ruangan (m)", roomWidth: "Lebar Ruangan (m)", ceramicSize: "Ukuran Keramik", ceramicBox: "Isi per Dus (m²)", ceramicPrice: "Harga per Dus (Rp)",
+                brickSec: "Hitung Dinding Hebel / Bata", brickLen: "Lebar Dinding (m)", brickHeight: "Tinggi Dinding (m)", brickType: "Tipe Material", brickPrice: "Harga Satuan (Rp)",
+                cardWallTitle: "Wall Panel & Lis PVC", cardWallDesc: "Hitung lembar dinding dekoratif",
+                cardPaintTitle: "Cat Dinding Tembok", cardPaintDesc: "Hitung liter & kaleng cat",
+                cardCeramicTitle: "Keramik & Granit Lantai", cardCeramicDesc: "Kebutuhan dus ubin lantai",
+                cardBrickTitle: "Bata & Hebel Dinding", cardBrickDesc: "Estimasi batako & mortar"
+            },
+            en: {
+                title: "Smart Estimator", subtitle: "Material & Building Calculator",
+                menuSettings: "Settings", menuSettingsSub: "App theme & language",
+                menuHistory: "Calculation History", menuHistorySub: "View all estimation history",
+                menuRemoveAds: "Remove Ads Permanently", menuRemoveAdsSub: "Upgrade to Pro version without ads",
+                menuDonate: "Donate Creator", menuDonateSub: "Buy a coffee for developer",
+                chooseCalc: "Select Calculator Feature:", setPageTitle: "App Settings",
+                darkMode: "Dark Mode", darkModeSub: "Toggle dark/light app theme",
+                languageLbl: "Language / Bahasa", calcBtn: "Calculate Estimate Now",
+                resetBtn: "Reset Numbers to 0", resTitle: "Estimate Cost Details",
+                totalLabel: "Total Estimated Cost", pdfBtn: "Print / PDF", waBtn: "Send WA",
+                fullscreenMode: "Full Screen Mode", backHome: "Main Menu",
+                navMenu: "Navigation Menu", navDesc: "Menu options & settings",
+                adTitle: "ADVERTISEMENT / SPONSOR", adPlaceholder: "Your Ad Banner Code Space (300x250 / Banner)",
+                btnAdRemove: "Remove Ads", modalPremTitle: "Activate Ad-Free Mode", modalPremDesc: "Purchase a Unique Pass Code via SociaBuzz to remove all ads permanently!",
+                lblStep1: "Don't have a Unique Code?", btnBuyCode: "Buy Pass Code on SociaBuzz", lblInputCode: "Enter Your Unique Pass Code:", btnVerifyCode: "Activate Ad-Free Feature",
+                wallSec: "Wall Dimensions & Panel", wallLen: "Wall Width (m)", wallHeight: "Wall Height (m)", panelWidth: "Panel Width (cm)", panelPrice: "Price per Sheet (Rp)",
+                paintSec: "Wall Paint Requirements", paintArea: "Total Wall Area (m²)", paintCoat: "Number of Coats", paintCov: "Coverage (m²/Liter)", paintPrice: "Price per 5L Can (Rp)",
+                ceramicSec: "Floor Tile Calculator", roomLen: "Room Length (m)", roomWidth: "Room Width (m)", ceramicSize: "Tile Size", ceramicBox: "Box Content (m²)", ceramicPrice: "Price per Box (Rp)",
+                brickSec: "Brick & Hebel Wall Calculator", brickLen: "Wall Width (m)", brickHeight: "Wall Height (m)", brickType: "Material Type", brickPrice: "Unit Price (Rp)",
+                cardWallTitle: "Wall Panel & PVC Trim", cardWallDesc: "Calculate decorative wall sheets",
+                cardPaintTitle: "Wall Paint", cardPaintDesc: "Calculate liters & paint cans",
+                cardCeramicTitle: "Floor Tiles & Granite", cardCeramicDesc: "Floor tile box requirements",
+                cardBrickTitle: "Bricks & Hebel Walls", cardBrickDesc: "Estimate blocks & mortar"
+            }
+        };
+
+        function openDrawer() {
+            document.getElementById('rightDrawer').style.display = 'flex';
+            document.getElementById('drawerOverlay').style.display = 'block';
+        }
+
+        function closeDrawer() {
+            document.getElementById('rightDrawer').style.display = 'none';
+            document.getElementById('drawerOverlay').style.display = 'none';
+        }
+
+        function openHistoryModal() {
+            closeDrawer();
+            renderHistoryList();
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        function openSettingsPage() {
+            closeDrawer();
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('featureHeader').classList.add('hidden');
+            document.getElementById('settingsHeader').classList.remove('hidden');
+            document.getElementById('settingsPageView').classList.remove('hidden');
+            document.getElementById('actionButtonsContainer').classList.add('hidden');
+            document.querySelectorAll('.calculator-module').forEach(el => el.classList.add('hidden'));
+            document.getElementById('result-container').classList.add('hidden');
+        }
+
+        function selectFeature(tab) {
+            currentTab = tab;
+            closeDrawer();
+
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('settingsHeader').classList.add('hidden');
+            document.getElementById('settingsPageView').classList.add('hidden');
+            
+            document.getElementById('featureHeader').classList.remove('hidden');
+            document.getElementById('actionButtonsContainer').classList.remove('hidden');
+
+            document.querySelectorAll('.calculator-module').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`module-${tab}`).classList.remove('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+
+            const infoMap = {
+                wall: { title: "Wall Panel & Lis", icon: "fa-solid fa-chart-pie" },
+                paint: { title: "Cat Dinding Tembok", icon: "fa-solid fa-paint-roller" },
+                ceramic: { title: "Keramik & Granit", icon: "fa-solid fa-border-all" },
+                brick: { title: "Bata & Hebel", icon: "fa-solid fa-cubes" }
+            };
+
+            document.getElementById('featureHeaderTitle').innerText = infoMap[tab].title;
+            document.getElementById('featureHeaderIcon').className = infoMap[tab].icon;
+        }
+
+        function backToHome() {
+            currentTab = null;
+            document.getElementById('featureHeader').classList.add('hidden');
+            document.getElementById('settingsHeader').classList.add('hidden');
+            document.getElementById('settingsPageView').classList.add('hidden');
+            document.getElementById('actionButtonsContainer').classList.add('hidden');
+            document.querySelectorAll('.calculator-module').forEach(el => el.classList.add('hidden'));
+            document.getElementById('result-container').classList.add('hidden');
+
+            document.getElementById('mainHeader').classList.remove('hidden');
+            document.getElementById('homeView').classList.remove('hidden');
+        }
+
+        function resetCalculator() {
+            if (!currentTab) return;
+            const activeModule = document.getElementById(`module-${currentTab}`);
+            activeModule.querySelectorAll('input[type="number"]').forEach(input => { input.value = "0"; });
+            document.getElementById('result-container').classList.add('hidden');
+            lastCalculation = null;
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            const t = langData[lang];
+            
+            document.getElementById('txt-title').innerText = t.title;
+            document.getElementById('txt-subtitle').innerText = t.subtitle;
+            document.getElementById('menu-settings').innerText = t.menuSettings;
+            document.getElementById('menu-settings-sub').innerText = t.menuSettingsSub;
+            document.getElementById('menu-history').innerText = t.menuHistory;
+            document.getElementById('menu-history-sub').innerText = t.menuHistorySub;
+
+            const isPremium = localStorage.getItem('isAdFree') === 'true';
+            if (!isPremium) {
+                document.getElementById('menu-remove-ads').innerText = t.menuRemoveAds;
+                document.getElementById('menu-remove-ads-sub').innerText = t.menuRemoveAdsSub;
+            }
+
+            document.getElementById('menu-donate').innerText = t.menuDonate;
+            document.getElementById('menu-donate-sub').innerText = t.menuDonateSub;
+            document.getElementById('lbl-choose-calc').innerText = t.chooseCalc;
+            document.getElementById('lbl-set-pagetitle').innerText = t.setPageTitle;
+            document.getElementById('lbl-set-header').innerText = t.setPageTitle;
+            document.getElementById('lbl-darkmode').innerText = t.darkMode;
+            document.getElementById('lbl-darkmode-sub').innerText = t.darkModeSub;
+            document.getElementById('lbl-language').innerText = t.languageLbl;
+            document.getElementById('btn-calc-text').innerText = t.calcBtn;
+            document.getElementById('btn-reset-text').innerText = t.resetBtn;
+            document.getElementById('res-title-text').innerText = t.resTitle;
+            document.getElementById('res-total-label').innerText = t.totalLabel;
+            document.getElementById('btn-pdf-text').innerText = t.pdfBtn;
+            document.getElementById('btn-wa-text').innerText = t.waBtn;
+            document.getElementById('lbl-nav-menu').innerText = t.navMenu;
+            document.getElementById('lbl-nav-desc').innerText = t.navDesc;
+
+            if(document.getElementById('lbl-ad-title')) document.getElementById('lbl-ad-title').innerText = t.adTitle;
+            if(document.getElementById('lbl-ad-placeholder')) document.getElementById('lbl-ad-placeholder').innerText = t.adPlaceholder;
+            if(document.getElementById('btn-ad-remove')) document.getElementById('btn-ad-remove').innerText = t.btnAdRemove;
+
+            if(document.getElementById('lbl-modal-prem-title')) document.getElementById('lbl-modal-prem-title').innerText = t.modalPremTitle;
+            if(document.getElementById('lbl-modal-prem-desc')) document.getElementById('lbl-modal-prem-desc').innerText = t.modalPremDesc;
+            if(document.getElementById('lbl-step1')) document.getElementById('lbl-step1').innerText = t.lblStep1;
+            if(document.getElementById('btn-buy-code')) document.getElementById('btn-buy-code').innerText = t.btnBuyCode;
+            if(document.getElementById('lbl-input-code')) document.getElementById('lbl-input-code').innerText = t.lblInputCode;
+            if(document.getElementById('btn-verify-code')) document.getElementById('btn-verify-code').innerText = t.btnVerifyCode;
+            
+            document.querySelectorAll('#lbl-fullscreen-mode, #lbl-fullscreen-mode-2').forEach(el => el.innerText = t.fullscreenMode);
+            document.querySelectorAll('#btn-back-home, #btn-back-home-2').forEach(el => el.innerText = t.backHome);
+
+            document.getElementById('card-wall-title').innerText = t.cardWallTitle;
+            document.getElementById('card-wall-desc').innerText = t.cardWallDesc;
+            document.getElementById('card-paint-title').innerText = t.cardPaintTitle;
+            document.getElementById('card-paint-desc').innerText = t.cardPaintDesc;
+            document.getElementById('card-ceramic-title').innerText = t.cardCeramicTitle;
+            document.getElementById('card-ceramic-desc').innerText = t.cardCeramicDesc;
+            document.getElementById('card-brick-title').innerText = t.cardBrickTitle;
+            document.getElementById('card-brick-desc').innerText = t.cardBrickDesc;
+
+            document.getElementById('wall-sec-title').innerText = t.wallSec;
+            document.getElementById('lbl-wall-len').innerText = t.wallLen;
+            document.getElementById('lbl-wall-height').innerText = t.wallHeight;
+            document.getElementById('lbl-panel-width').innerText = t.panelWidth;
+            document.getElementById('lbl-panel-price').innerText = t.panelPrice;
+
+            document.getElementById('paint-sec-title').innerText = t.paintSec;
+            document.getElementById('lbl-paint-area').innerText = t.paintArea;
+            document.getElementById('lbl-paint-coat').innerText = t.paintCoat;
+            document.getElementById('lbl-paint-cov').innerText = t.paintCov;
+            document.getElementById('lbl-paint-price').innerText = t.paintPrice;
+
+            document.getElementById('ceramic-sec-title').innerText = t.ceramicSec;
+            document.getElementById('lbl-room-len').innerText = t.roomLen;
+            document.getElementById('lbl-room-width').innerText = t.roomWidth;
+            document.getElementById('lbl-ceramic-size').innerText = t.ceramicSize;
+            document.getElementById('lbl-ceramic-box').innerText = t.ceramicBox;
+            document.getElementById('lbl-ceramic-price').innerText = t.ceramicPrice;
+
+            document.getElementById('brick-sec-title').innerText = t.brickSec;
+            document.getElementById('lbl-brick-len').innerText = t.brickLen;
+            document.getElementById('lbl-brick-height').innerText = t.brickHeight;
+            document.getElementById('lbl-brick-type').innerText = t.brickType;
+            document.getElementById('lbl-brick-price').innerText = t.brickPrice;
+        }
+
+        function saveToHistory(badge, plainText, total) {
+            let historyList = JSON.parse(localStorage.getItem('estimationHistory')) || [];
+            let now = new Date();
+            let dateTimeString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' - ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            historyList.unshift({ date: dateTimeString, badge, plainText, total });
+            if (historyList.length > 50) historyList.pop();
+            localStorage.setItem('estimationHistory', JSON.stringify(historyList));
+        }
+
+        function renderHistoryList() {
+            let container = document.getElementById('historyListContainer');
+            let historyList = JSON.parse(localStorage.getItem('estimationHistory')) || [];
+
+            if (historyList.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-folder-open" style="font-size: 1.5rem; opacity: 0.5;"></i><p>Belum ada riwayat pencatatan estimasi.</p></div>`;
+                return;
+            }
+
+            container.innerHTML = historyList.map((item, index) => `
+                <div class="card-box" style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem;">
+                        <span style="font-size: 0.65rem; background: rgba(37,99,235,0.1); color: var(--brand-color); padding: 0.1rem 0.4rem; border-radius: 9999px; font-weight: 700;">${item.badge}</span>
+                        <span style="font-size: 0.6rem; color: var(--text-muted);">${item.date}</span>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); whitespace: pre-line;">${item.plainText}</div>
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.4rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; font-weight: 800; color: var(--brand-color);">Total: Rp ${item.total.toLocaleString('id-ID')}</span>
+                        <button onclick="shareHistoryWhatsApp(${index})" style="padding: 0.2rem 0.5rem; background: #10b981; color: white; border: none; border-radius: 0.35rem; font-size: 0.65rem; font-weight: 700; cursor: pointer;">Kirim WA</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if (confirm(currentLang === 'id' ? "Apakah Anda yakin ingin menghapus semua riwayat?" : "Are you sure you want to clear history?")) {
+                localStorage.removeItem('estimationHistory');
+                renderHistoryList();
+            }
+        }
+
+        function shareHistoryWhatsApp(index) {
+            let historyList = JSON.parse(localStorage.getItem('estimationHistory')) || [];
+            let item = historyList[index];
+            if (!item) return;
+            let message = `*Rincian Estimasi Smart Estimator*\nKategori: *${item.badge}*\nWaktu: ${item.date}\n\n${item.plainText}\n\n-------------------\n*Total Biaya: Rp ${item.total.toLocaleString('id-ID')}*`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function calculate() {
+            let html = '', totalCost = 0, badgeText = '', plainTextDetails = '';
+
+            if (currentTab === 'wall') {
+                badgeText = 'Wall Panel';
+                let len = parseFloat(document.getElementById('wall-length').value) || 0;
+                let height = parseFloat(document.getElementById('wall-height').value) || 0;
+                let pWidthCm = parseFloat(document.getElementById('panel-width').value) || 16;
+                let price = parseFloat(document.getElementById('price-panel').value) || 0;
+                let wallArea = len * height;
+                let panelWidthM = pWidthCm / 100;
+                let panelArea = panelWidthM > 0 ? (panelWidthM * 2.9) : 1;
+                let rawNeeded = panelArea > 0 ? (wallArea / panelArea) : 0;
+                let totalNeeded = Math.ceil(rawNeeded * 1.05);
+                totalCost = totalNeeded * price;
+
+                html = `
+                    <div style="display:flex; justify-content:space-between;"><span>Luas Dinding:</span><b>${wallArea.toFixed(2)} m²</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Kebutuhan Murni:</span><b>${rawNeeded.toFixed(1)} lembar</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Cadangan (+5%):</span><b>${totalNeeded} lembar</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Harga Satuan:</span><b>Rp ${price.toLocaleString('id-ID')}</b></div>
+                `;
+                plainTextDetails = `Luas Dinding: ${wallArea.toFixed(2)} m²\nKebutuhan Murni: ${rawNeeded.toFixed(1)} lembar\nCadangan (+5%): ${totalNeeded} lembar\nHarga Satuan: Rp ${price.toLocaleString('id-ID')}`;
+
+            } else if (currentTab === 'paint') {
+                badgeText = 'Cat Dinding';
+                let area = parseFloat(document.getElementById('paint-area').value) || 0;
+                let coat = parseFloat(document.getElementById('paint-coat').value) || 2;
+                let coverage = parseFloat(document.getElementById('paint-coverage').value) || 10;
+                let price = parseFloat(document.getElementById('price-paint').value) || 0;
+                let totalLiters = coverage > 0 ? ((area * coat) / coverage) : 0;
+                let cansNeeded = Math.ceil(totalLiters / 5);
+                totalCost = cansNeeded * price;
+
+                html = `
+                    <div style="display:flex; justify-content:space-between;"><span>Total Area Lapis:</span><b>${(area * coat).toFixed(1)} m²</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Total Cat Diperlukan:</span><b>${totalLiters.toFixed(1)} Liter</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Kaleng (Kemasan 5L):</span><b>${cansNeeded} Kaleng</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Harga per Kaleng:</span><b>Rp ${price.toLocaleString('id-ID')}</b></div>
+                `;
+                plainTextDetails = `Total Area Lapis: ${(area * coat).toFixed(1)} m²\nTotal Cat Diperlukan: ${totalLiters.toFixed(1)} Liter\nKaleng (Kemasan 5L): ${cansNeeded} Kaleng\nHarga per Kaleng: Rp ${price.toLocaleString('id-ID')}`;
+
+            } else if (currentTab === 'ceramic') {
+                badgeText = 'Keramik Lantai';
+                let len = parseFloat(document.getElementById('room-length').value) || 0;
+                let width = parseFloat(document.getElementById('room-width').value) || 0;
+                let boxContent = parseFloat(document.getElementById('ceramic-box-content').value) || 1.44;
+                let price = parseFloat(document.getElementById('price-ceramic').value) || 0;
+                let roomArea = len * width;
+                let areaWithWaste = roomArea * 1.07;
+                let boxesNeeded = boxContent > 0 ? Math.ceil(areaWithWaste / boxContent) : 0;
+                totalCost = boxesNeeded * price;
+
+                html = `
+                    <div style="display:flex; justify-content:space-between;"><span>Luas Ruangan:</span><b>${roomArea.toFixed(2)} m²</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Termasuk Cadangan 7%:</span><b>${areaWithWaste.toFixed(2)} m²</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Jumlah Dus Keramik:</span><b>${boxesNeeded} Dus</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Harga per Dus:</span><b>Rp ${price.toLocaleString('id-ID')}</b></div>
+                `;
+                plainTextDetails = `Luas Ruangan: ${roomArea.toFixed(2)} m²\nTermasuk Cadangan 7%: ${areaWithWaste.toFixed(2)} m²\nJumlah Dus Keramik: ${boxesNeeded} Dus\nHarga per Dus: Rp ${price.toLocaleString('id-ID')}`;
+
+            } else if (currentTab === 'brick') {
+                badgeText = 'Bata / Hebel';
+                let len = parseFloat(document.getElementById('brick-length').value) || 0;
+                let height = parseFloat(document.getElementById('brick-height').value) || 0;
+                let type = document.getElementById('brick-type').value;
+                let price = parseFloat(document.getElementById('price-brick').value) || 0;
+                let wallArea = len * height;
+                let multiplier = type === 'hebel' ? 8 : 15;
+                let totalBricks = Math.ceil(wallArea * multiplier * 1.03);
+                totalCost = totalBricks * price;
+
+                html = `
+                    <div style="display:flex; justify-content:space-between;"><span>Luas Dinding:</span><b>${wallArea.toFixed(2)} m²</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Tipe Material:</span><b>${type === 'hebel' ? 'Hebel (8/m²)' : 'Batako (15/m²)'}</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Total Pcs (+3% cadangan):</span><b>${totalBricks} Pcs</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Harga Satuan:</span><b>Rp ${price.toLocaleString('id-ID')}</b></div>
+                `;
+                plainTextDetails = `Luas Dinding: ${wallArea.toFixed(2)} m²\nTipe Material: ${type === 'hebel' ? 'Hebel (8/m²)' : 'Batako (15/m²)'}\nTotal Pcs (+3% cadangan): ${totalBricks} Pcs\nHarga Satuan: Rp ${price.toLocaleString('id-ID')}`;
+            }
+
+            document.getElementById('res-badge').innerText = badgeText;
+            document.getElementById('res-content').innerHTML = html;
+            document.getElementById('res-total').innerText = `Rp ${totalCost.toLocaleString('id-ID')}`;
+            document.getElementById('result-container').classList.remove('hidden');
+
+            lastCalculation = { badge: badgeText, plainText: plainTextDetails, total: totalCost };
+            saveToHistory(badgeText, plainTextDetails, totalCost);
+        }
+
+        function shareWhatsApp() {
+            if (!lastCalculation) return;
+            let message = `*Rincian Estimasi Smart Estimator*\nKategori: *${lastCalculation.badge}*\n\n${lastCalculation.plainText}\n\n-------------------\n*Total Biaya: Rp ${lastCalculation.total.toLocaleString('id-ID')}*`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function copyToClipboard() {
+            if (!lastCalculation) return;
+            let message = `Rincian Estimasi Smart Estimator\nKategori: ${lastCalculation.badge}\n\n${lastCalculation.plainText}\n\nTotal Biaya: Rp ${lastCalculation.total.toLocaleString('id-ID')}`;
+            navigator.clipboard.writeText(message).then(() => { alert("Rincian disalin!"); });
+        }
+
+        function saveToPDF() { window.print(); }
+    </script>
+</body>
+</html>
